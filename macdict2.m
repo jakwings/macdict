@@ -44,39 +44,102 @@ void NSPrintErr(NSString *format, ...)
 NSString *gProgramName;
 void showHelpInformation()
 {
-    NSPrint(@"Usage: %@ [-h] [-l] [[-d <dictionary>], ...] <words>", gProgramName);
+    NSPrint(@"Usage: %@ [-h] [-l] [-d <dictionary> <words>", gProgramName);
     NSPrint(@"  -h    Display this help message.");
-    NSPrint(@"  -l    Show the list of names of all available dictionaries.");
-    NSPrint(@"  -d    Specify a dictionary to search in.");
+    NSPrint(@"  -l    Show indexed list of names of all available dictionaries.");
+    NSPrint(@"  -d    Specify dictionary indexes to search in, using ',' to separate them");
     NSPrint(@"        Use 'all' to select all available dictionaries.");
     NSPrint(@"        If no dictionary is specified, it will look up the word or phrase in all available and only return the first definition found.");
 }
 
 NSMapTable *availableDictionariesKeyedByName = nil;
+NSArray *availableDictionariesArray;
 int setupSystemInformation()
 {
     availableDictionariesKeyedByName = [NSMapTable
         mapTableWithKeyOptions: NSPointerFunctionsCopyIn
         valueOptions: NSPointerFunctionsObjectPointerPersonality];
-    for (id dictionary in (NSArray *)DCSCopyAvailableDictionaries()) {
+    NSSet *availableDictionaries = [(NSSet *)DCSCopyAvailableDictionaries() autorelease];
+    NSMutableArray *arrM = [NSMutableArray array];
+    for (id dictionary in availableDictionaries) {
         NSString *name = (NSString *)DCSDictionaryGetName((DCSDictionaryRef)dictionary);
         [availableDictionariesKeyedByName setObject: dictionary forKey: name];
+	[arrM addObject:dictionary];
     }
+    availableDictionariesArray = [arrM sortedArrayUsingComparator:^(id obj1, id obj2){
+	NSString *str1 = (NSString *)DCSDictionaryGetName((DCSDictionaryRef)obj1);
+	NSString *str2 = (NSString *)DCSDictionaryGetName((DCSDictionaryRef)obj2);
+	return [str1 compare:str2];	   
+    }];
     return 0;
 }
 
 void showDictionaryList()
 {
     @autoreleasepool {
-        for (NSString *name in availableDictionariesKeyedByName) {
-            NSPrint(@"%@", name);
-        }
+        //for (NSString *name in availableDictionariesKeyedByName) {
+        //    NSPrint(@"%@", name);
+        //}
+
+	for(int i=0; i<availableDictionariesArray.count; i++){
+	    NSPrint(@"%d) %@", i+1, (NSString *)DCSDictionaryGetName((DCSDictionaryRef)(availableDictionariesArray[i])));
+	}
     }
 }
 
 bool gToSearchInAllDictionaries = false;
 bool gToShowDictionaryList = false;
 bool gToShowHelpInformation = false;
+
+int ch;
+char *acceptedArgs = "d:lh";
+int setupParameters_mod(const int argc, char *const argv[], const NSMutableArray *words, const NSMutableSet *dicts)
+{
+    while((ch = getopt(argc, argv, acceptedArgs)) != -1){
+        switch(ch){
+            case 'h':
+                gToShowHelpInformation = true;
+                return 0;
+            case 'd':
+                    if(strcmp(optarg, "all") != 0){
+                        NSString *dictName = nil;
+			const int len = strlen(optarg);
+			char buffer[len+1];
+		       	strcpy(buffer, optarg);
+			char *p = strtok(buffer, ",");
+			while(p != NULL){
+			    int index;
+			    sscanf(p,"%d",&index);
+			    dictName = (NSString *)DCSDictionaryGetName((DCSDictionaryRef)availableDictionariesArray[index-1]);
+			    if(dictName){
+			        [dicts addObject:dictName];
+			    }
+			    p = strtok(NULL, ",");
+			}
+                    }else{
+                        gToSearchInAllDictionaries = true;
+                    }
+                break;
+            case 'l':
+                gToShowDictionaryList = true;
+                return 0;
+            case '?':
+            default:
+                exit(-1);
+        }
+    }
+    
+    //the last parameter is the searching word
+    if(argv[optind] != NULL){
+        NSString *param = [NSString stringWithCString:argv[optind] encoding:NSUTF8StringEncoding];
+        [words addObject:param];
+    }else{
+        printf("Please provide a word for searching.\n");
+        exit(-1);
+    }
+    return 0;
+}
+
 int setupParameters(const int argc, const char *argv[], const NSMutableArray *words, const NSMutableSet *dicts)
 {
     @autoreleasepool {
@@ -136,6 +199,7 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
             CFStringRef definition = DCSCopyTextDefinition(dictionary, (CFStringRef)phrase, range);
             if (definition) {
                 NSPrint(@"Definitions of <%@>\n%@", phrase, (NSString *)definition);
+	    	CFRelease(definition);
             } else {
                 NSPrint(@"Definitions of <%@>\n%@", phrase, @"(none)");
             }
@@ -156,6 +220,7 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
                     }
                     NSPrint(@"Definitions of <%@> in {%@}\n%@", (NSString *)term, dictionaryName, (NSString *)definition);
                     totalDefinitions++;
+		    CFRelease(definition);
                 }
 
                 /*// alternate mode?
@@ -179,7 +244,11 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
                  */
             }
             if (totalDefinitions < 1) {
-                NSPrint(@"Definitions of <%@>\n%@", phrase, @"(none)");
+		    if(!gToSearchInAllDictionaries){
+			    NSPrint(@"Definitions of <%@> in {%@}\n%@", phrase, [[dicts allObjects] componentsJoinedByString:@""], @"(none)");
+		    }else{
+                	NSPrint(@"Definitions of <%@> in {all}\n%@", phrase, @"(none)");
+		    }
             }
         }
     }
@@ -196,10 +265,10 @@ int main(int argc, char *argv[])
     NSMutableArray *words = [NSMutableArray array];
     NSMutableSet *dicts = [NSMutableSet set];
     int exitCode = 0;
-    if ((exitCode = setupParameters(argc, (void *)argv, words, dicts))) {
+    if ((exitCode = setupSystemInformation())) {
       exit(exitCode);
     }
-    if ((exitCode = setupSystemInformation())) {
+    if ((exitCode = setupParameters_mod(argc, (void *)argv, words, dicts))) {
       exit(exitCode);
     }
     if (gToShowHelpInformation) {
