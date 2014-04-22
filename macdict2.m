@@ -104,8 +104,8 @@ int setupParameters(const int argc, char *const argv[], const NSMutableArray *wo
                 gToShowDictionaryList = true;
                 return 0;
             case 'd':
-                param = [NSString stringWithCString: optarg encoding: NSUTF8StringEncoding];
                 if (!gToSearchInAllDictionaries) {
+                    param = [NSString stringWithCString: optarg encoding: NSUTF8StringEncoding];
                     if ([param isEqualToString: @"all"]) {
                         gToSearchInAllDictionaries = true;
                         [dicts removeAllObjects];
@@ -117,8 +117,8 @@ int setupParameters(const int argc, char *const argv[], const NSMutableArray *wo
                 }
                 break;
             case 'i':
-                indexes = [NSString stringWithCString: optarg encoding: NSUTF8StringEncoding];
                 if (!gToSearchInAllDictionaries) {
+                    indexes = [NSString stringWithCString: optarg encoding: NSUTF8StringEncoding];
                     for (NSString *index in [indexes componentsSeparatedByString: @","]) {
                         if (index.intValue == 0) {
                             gToSearchInAllDictionaries = true;
