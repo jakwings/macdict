@@ -1,7 +1,13 @@
+macdict.swift
+=============
+
+Swift version of macdict. Open `macdict.swift/macdict.xcodeproj` and build it.
+
+
 macdict2
 ========
 
-The second version of macdict.
+The second version of macdict. (buggy)
 
 Installation
 ------------
