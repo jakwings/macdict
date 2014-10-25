@@ -182,7 +182,7 @@ func parseOptions() {
                 selectedDictionaries.addObject(dictionary)
             }
         }
-        let searchString: String = inputWords.reduce("") { return $0 + $1 }
+        let searchString: String = (inputWords as NSArray).componentsJoinedByString(" ")
         lookUp(searchString, selectedDictionaries)
     }
 }
