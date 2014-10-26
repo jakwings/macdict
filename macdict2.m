@@ -159,7 +159,8 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
         CFRange range = DCSGetTermRangeInString(NULL, (CFStringRef)phrase, 0);
         if (range.location != kCFNotFound) {
             CFStringRef definition = DCSCopyTextDefinition(NULL, (CFStringRef)phrase, range);
-            NSPrint(@"Definitions of \"%@\":\n%@", phrase, (NSString *)definition);
+            CFStringRef term = (CFStringRef)[phrase substringWithRange: NSMakeRange(range.location, range.length)];
+            NSPrint(@"Definitions of \"%@\":\n%@", (NSString *)term, (NSString *)definition);
             CFRelease(definition);
         } else {
             NSPrintErr(@"Definitions of \"%@\":\n%@", phrase, @"(none)");
