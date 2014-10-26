@@ -77,14 +77,15 @@ func listDictionaries() {
     }
 }
 
-func lookUp(term: String, dictionaries: NSMutableSet) {
+func lookUp(string: NSString, dictionaries: NSMutableSet) {
     if dictionaries.count < 1 {
-        let range: CFRange = DCSGetTermRangeInString(nil, term, 0)
+        let range: CFRange = DCSGetTermRangeInString(nil, string, 0)
         if range.location != kCFNotFound {
-            let definition: String = DCSCopyTextDefinition(nil, term, range).takeUnretainedValue()
+            let term: NSString = string.substringWithRange(NSMakeRange(range.location, range.length))
+            let definition: String = DCSCopyTextDefinition(nil, string, range).takeUnretainedValue()
             stdout.writeln("Definition of \"\(term)\":\n\(definition)")
         } else {
-            stderr.writeln("Definition of \"\(term)\":\n(none)")
+            stderr.writeln("Definition of \"\(string)\":\n(none)")
         }
     } else {
         var i = 0
@@ -94,12 +95,13 @@ func lookUp(term: String, dictionaries: NSMutableSet) {
             }
             let dict = dictionary as DCSDictionary
             let name = DCSDictionaryGetName(dict).takeUnretainedValue()
-            let range: CFRange = DCSGetTermRangeInString(dict, term, 0)
+            let range: CFRange = DCSGetTermRangeInString(dict, string, 0)
             if range.location != kCFNotFound {
+                let term: NSString = string.substringWithRange(NSMakeRange(range.location, range.length))
                 let definition: String = DCSCopyTextDefinition(dict, term, range).takeUnretainedValue()
                 stdout.writeln("Definition of \"\(term)\" in \(name):\n\(definition)")
             } else {
-                stderr.writeln("Definition of \"\(term)\" in \(name):\n(none)")
+                stderr.writeln("Definition of \"\(string)\" in \(name):\n(none)")
             }
             ++i
         }
@@ -182,7 +184,7 @@ func parseOptions() {
                 selectedDictionaries.addObject(dictionary)
             }
         }
-        let searchString: String = (inputWords as NSArray).componentsJoinedByString(" ")
+        let searchString: NSString = (inputWords as NSArray).componentsJoinedByString(" ")
         lookUp(searchString, selectedDictionaries)
     }
 }
