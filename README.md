@@ -7,14 +7,14 @@ Swift version of macdict. Open `macdict.swift/macdict.xcodeproj` and build it.
 macdict2
 ========
 
-The second version of macdict. (buggy)
+The second version of macdict.
 
 Installation
 ------------
 
 for Objective-C executable file:
 
-> `make -f Makefile2 m`
+> `make -f Makefile2 objc`
 
 Usage
 -----

@@ -1,6 +1,6 @@
 EXECUTABLE = macdict2
 
-m: $(EXECUTABLE).m
+objc: $(EXECUTABLE).m
 	@clang -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
 		&& chmod +x $(EXECUTABLE)
 
