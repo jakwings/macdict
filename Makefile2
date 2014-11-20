@@ -1,8 +1,13 @@
 EXECUTABLE = macdict2
 
 objc: $(EXECUTABLE).m
-	@clang -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
+	@xcrun clang -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
 		&& chmod +x $(EXECUTABLE)
+
+swift: $(EXECUTABLE).swift $(EXECUTABLE).swift.h
+	@xcrun swiftc -sdk $(shell xcrun --show-sdk-path --sdk macosx) -o $(EXECUTABLE) \
+      -import-objc-header $(EXECUTABLE).swift.h $(EXECUTABLE).swift \
+    && chmod +x $(EXECUTABLE)
 
 clean:
 	rm $(EXECUTABLE)

@@ -1,9 +1,3 @@
-macdict.swift
-=============
-
-Swift version of macdict. Open `macdict.swift/macdict.xcodeproj` and build it.
-
-
 macdict2
 ========
 
@@ -11,6 +5,10 @@ The second version of macdict.
 
 Installation
 ------------
+
+for Swift™ executable file:
+
+> `make -f Makefile2 swfit`
 
 for Objective-C executable file:
 
