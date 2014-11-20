@@ -1,10 +1,10 @@
 EXECUTABLE = macdict
 
 c: $(EXECUTABLE).c
-	@clang -o $(EXECUTABLE) -framework CoreServices $< && chmod +x $(EXECUTABLE)
+	@xcrun clang -o $(EXECUTABLE) -framework CoreServices $< && chmod +x $(EXECUTABLE)
 
 m: $(EXECUTABLE).m
-	@clang -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
+	@xcrun clang -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
 		&& chmod +x $(EXECUTABLE)
 
 sh: $(EXECUTABLE).sh
