@@ -1,7 +1,7 @@
 EXECUTABLE = macdict2
 
 objc: $(EXECUTABLE).m
-	@xcrun clang -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
+	@xcrun clang -fobjc-arc -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
 		&& chmod +x $(EXECUTABLE)
 
 swift: $(EXECUTABLE).swift $(EXECUTABLE).swift.h
