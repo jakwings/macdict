@@ -33,7 +33,7 @@ Show a list of names of all available dictionaries with indexes.
 
 If `dictionary` is `all`, then macdict2 will search all available dictionaries and show all the definitions of the word or phrase.
 
-If no dictionary is specified, macdict2 will search all available dictionaries and show the first definition found.
+If no dictionary is specified, macdict2 will search all system built-in dictionaries and show the first definition found.
 
 ### Options: `-i <index>`
 
