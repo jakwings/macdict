@@ -176,13 +176,13 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
             NSArray *records = (__bridge_transfer NSArray *)DCSCopyRecordsForSearchString(dictionary, (__bridge CFStringRef)phrase, NULL, NULL);
             for (id record in records) {
                 CFStringRef definition = DCSRecordCopyData((__bridge CFTypeRef)record);
-                CFStringRef term = DCSRecordGetHeadword((__bridge CFTypeRef)record);
+                CFStringRef term = DCSRecordGetHeadword((__bridge_retained CFTypeRef)record);
 
                 // dirty & unreliable
                 NSMutableString *txt = [[NSMutableString alloc] initWithCapacity:0];
                 [txt setString:(__bridge NSString *)definition];
                 NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:@"<(?:[^>'\"]*|'[^']*'|\"[^\"]*\")*>|^\\s*|\\s*$" options:0 error:nil];
-                // filter well-formed xml tags
+                // filter tags in well-formed xml
                 [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
                 // further remove whitespace
                 [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
