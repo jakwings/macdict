@@ -164,6 +164,7 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
             NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, (__bridge NSString *)definition);
             CFRelease(definition);
             CFRelease(term);
+            totalDefinitions++;
         } else {
             NSPrintErr(@"Definitions of \"%@\":\n%@", phrase, @"(none)");
         }
@@ -174,9 +175,6 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
             // NEW!!!!!!!!!!!!
             NSArray *records = (__bridge_transfer NSArray *)DCSCopyRecordsForSearchString(dictionary, (__bridge CFStringRef)phrase, NULL, NULL);
             for (id record in records) {
-                if (totalDefinitions > 0) {
-                    NSPrint(@"%%");
-                }
                 CFStringRef definition = DCSRecordCopyData((__bridge CFTypeRef)record);
                 CFStringRef term = DCSRecordGetHeadword((__bridge CFTypeRef)record);
 
@@ -188,6 +186,9 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
                 [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
                 // further remove whitespace
                 [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
+                if (totalDefinitions > 0) {
+                    NSPrint(@"%%");
+                }
                 NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, txt);
 
                 CFRelease(definition);
