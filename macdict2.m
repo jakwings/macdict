@@ -154,6 +154,8 @@ int setupParameters(const int argc, char *const argv[], const NSMutableArray *wo
 
 int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
 {
+    int totalDefinitions = 0;
+
     if (!gToSearchInAllDictionaries && (dicts.count < 1)) {
         CFRange range = DCSGetTermRangeInString(NULL, (__bridge CFStringRef)phrase, 0);
         if (range.location != kCFNotFound) {
@@ -166,9 +168,34 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
             NSPrintErr(@"Definitions of \"%@\":\n%@", phrase, @"(none)");
         }
     } else {
-        int totalDefinitions = 0;
         for (id dictionaryName in (gToSearchInAllDictionaries ? gAvailableDictionariesKeyedByName : dicts)) {
             DCSDictionaryRef dictionary = (__bridge DCSDictionaryRef)[gAvailableDictionariesKeyedByName objectForKey: dictionaryName];
+
+            // NEW!!!!!!!!!!!!
+            NSArray *records = (__bridge_transfer NSArray *)DCSCopyRecordsForSearchString(dictionary, (__bridge CFStringRef)phrase, NULL, NULL);
+            for (id record in records) {
+                if (totalDefinitions > 0) {
+                    NSPrint(@"%%");
+                }
+                CFStringRef definition = DCSRecordCopyData((__bridge CFTypeRef)record);
+                CFStringRef term = DCSRecordGetHeadword((__bridge CFTypeRef)record);
+
+                // dirty & unreliable
+                NSMutableString *txt = [[NSMutableString alloc] initWithCapacity:0];
+                [txt setString:(__bridge NSString *)definition];
+                NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:@"<(?:[^>'\"]*|'[^']*'|\"[^\"]*\")*>|^\\s*|\\s*$" options:0 error:nil];
+                // filter well-formed xml tags
+                [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
+                // further remove whitespace
+                [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
+                NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, txt);
+
+                CFRelease(definition);
+                CFRelease(term);
+                totalDefinitions++;
+            }
+            continue;
+
             CFRange range = DCSGetTermRangeInString(dictionary, (__bridge CFStringRef)phrase, 0);
             if (totalDefinitions > 0) {
                 if (range.location != kCFNotFound) {
@@ -183,13 +210,13 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
                 NSPrint(@"Definitions of \"%@\" in %@:\n%@", (__bridge NSString *)term, dictionaryName, (__bridge NSString *)definition);
                 CFRelease(definition);
                 CFRelease(term);
+                totalDefinitions++;
             } else {
                 NSPrintErr(@"Definitions of \"%@\" in %@:\n(none)", phrase, dictionaryName);
             }
-            totalDefinitions++;
         }
     }
-    return 0;
+    return totalDefinitions > 0 ? 0 : 1;
 }
 
 int main(int argc, char *argv[])
