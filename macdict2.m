@@ -189,7 +189,7 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
                 if (totalDefinitions > 0) {
                     NSPrint(@"%%");
                 }
-                NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, txt);
+                NSPrint(@"Definitions of \"%@\" in %@:\n%@", (__bridge NSString *)term, dictionaryName, txt);
 
                 CFRelease(definition);
                 CFRelease(term);
