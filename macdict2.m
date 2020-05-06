@@ -71,7 +71,7 @@ int setupSystemInformation()
     gAvailableDictionariesKeyedByIndex = [collectedDictionaries sortedArrayUsingComparator: ^(id obj1, id obj2) {
         NSString *str1 = (__bridge NSString *)DCSDictionaryGetName((__bridge DCSDictionaryRef)obj1);
         NSString *str2 = (__bridge NSString *)DCSDictionaryGetName((__bridge DCSDictionaryRef)obj2);
-        return [str1 compare: str2];	   
+        return [str1 compare: str2];
     }];
     return 0;
 }
@@ -137,7 +137,7 @@ int setupParameters(const int argc, char *const argv[], const NSMutableArray *wo
                 return -1;
         }
     }
-    
+
     //the rest parameters are the searching words
     if (argv[optind] != NULL) {
         for (i = optind; argv[i] != NULL; i++) {
@@ -161,7 +161,14 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
         if (range.location != kCFNotFound) {
             CFStringRef definition = DCSCopyTextDefinition(NULL, (__bridge CFStringRef)phrase, range);
             CFStringRef term = (__bridge_retained CFStringRef)[phrase substringWithRange: NSMakeRange(range.location, range.length)];
-            NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, (__bridge NSString *)definition);
+
+            NSMutableString *txt = [[NSMutableString alloc] initWithCapacity:0];
+            NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:@"\\s+" options:0 error:nil];
+            [txt setString:(__bridge NSString *)definition];
+            [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@" "];
+            [txt setString:[txt stringByTrimmingCharactersInSet:[NSMutableCharacterSet whitespaceAndNewlineCharacterSet]]];
+            NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, txt);
+
             CFRelease(definition);
             CFRelease(term);
             totalDefinitions++;
@@ -174,22 +181,27 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
 
             // NEW!!!!!!!!!!!!
             NSArray *records = (__bridge_transfer NSArray *)DCSCopyRecordsForSearchString(dictionary, (__bridge CFStringRef)phrase, NULL, NULL);
+            NSMutableString *txt = [[NSMutableString alloc] initWithCapacity:0];
+            NSString *xsl = @"<?xml version='1.0' encoding='UTF-8'?>\
+                            <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>\
+                                <xsl:output method='text' encoding='UTF-8' indent='no'/>\
+                                    <xsl:template match='/'>\
+                                        <xsl:value-of select='normalize-space()'/>\
+                                    </xsl:template>\
+                            </xsl:stylesheet>\
+                            ";
             for (id record in records) {
                 CFStringRef definition = DCSRecordCopyData((__bridge CFTypeRef)record);
                 CFStringRef term = DCSRecordGetHeadword((__bridge_retained CFTypeRef)record);
 
-                // dirty & unreliable
-                NSMutableString *txt = [[NSMutableString alloc] initWithCapacity:0];
                 [txt setString:(__bridge NSString *)definition];
-                NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:@"<(?:[^>'\"]*|'[^']*'|\"[^\"]*\")*>|^\\s*|\\s*$" options:0 error:nil];
-                // filter tags in well-formed xml
-                [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
-                // further remove whitespace
-                [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@""];
+                NSXMLDocument *xml = [[NSXMLDocument alloc] initWithData:[txt dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
+                NSData *data = [xml objectByApplyingXSLTString:xsl arguments:nil error:nil];
+                NSString *defs = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
                 if (totalDefinitions > 0) {
                     NSPrint(@"%%");
                 }
-                NSPrint(@"Definitions of \"%@\" in %@:\n%@", (__bridge NSString *)term, dictionaryName, txt);
+                NSPrint(@"Definitions of \"%@\" in %@:\n%@", (__bridge NSString *)term, dictionaryName, defs);
 
                 CFRelease(definition);
                 CFRelease(term);
