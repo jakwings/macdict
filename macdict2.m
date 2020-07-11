@@ -51,6 +51,7 @@ void showHelpInformation(bool toStderr)
     print(@"        If no dictionary is specified, it will look up the word or phrase in all available dictionaries and only return the first definition found.");
     print(@"  -i    Specify dictionary indexes to search in, using ',' as delimiters.");
     print(@"        If indexes contain 0 then all available dictionaries are selected.");
+    print(@"  -r    Show data in the XML format.");
 }
 
 NSMapTable *gAvailableDictionariesKeyedByName = NULL;
@@ -87,12 +88,13 @@ void showDictionaryList()
 bool gToSearchInAllDictionaries = false;
 bool gToShowDictionaryList = false;
 bool gToShowHelpInformation = false;
+bool gToShowRawData = false;
 
 int setupParameters(const int argc, char *const argv[], const NSMutableArray *words, const NSMutableSet *dicts)
 {
     NSString *param = NULL;
     NSString *indexes = NULL;
-    char *acceptedArgs = "+d:i:lh";
+    char *acceptedArgs = "+d:i:rlh";
     int i, ch;
     while ((ch = getopt(argc, argv, acceptedArgs)) != -1) {
         switch (ch) {
@@ -102,6 +104,9 @@ int setupParameters(const int argc, char *const argv[], const NSMutableArray *wo
             case 'l':
                 gToShowDictionaryList = true;
                 return 0;
+            case 'r':
+                gToShowRawData = true;
+                break;
             case 'd':
                 if (!gToSearchInAllDictionaries) {
                     param = [NSString stringWithCString: optarg encoding: NSUTF8StringEncoding];
@@ -165,8 +170,10 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
             NSMutableString *txt = [[NSMutableString alloc] initWithCapacity:0];
             NSRegularExpression *re = [NSRegularExpression regularExpressionWithPattern:@"\\s+" options:0 error:nil];
             [txt setString:(__bridge NSString *)definition];
-            [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@" "];
-            [txt setString:[txt stringByTrimmingCharactersInSet:[NSMutableCharacterSet whitespaceAndNewlineCharacterSet]]];
+            if (!gToShowRawData) {
+                [re replaceMatchesInString:txt options:0 range:NSMakeRange(0, [txt length]) withTemplate:@" "];
+                [txt setString:[txt stringByTrimmingCharactersInSet:[NSMutableCharacterSet whitespaceAndNewlineCharacterSet]]];
+            }
             NSPrint(@"Definitions of \"%@\":\n%@", (__bridge NSString *)term, txt);
 
             CFRelease(definition);
@@ -195,13 +202,15 @@ int searchDictionary(const NSString *phrase, const NSMutableSet *dicts)
                 CFStringRef term = DCSRecordGetHeadword((__bridge_retained CFTypeRef)record);
 
                 [txt setString:(__bridge NSString *)definition];
-                NSXMLDocument *xml = [[NSXMLDocument alloc] initWithData:[txt dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
-                NSData *data = [xml objectByApplyingXSLTString:xsl arguments:nil error:nil];
-                NSString *defs = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                if (!gToShowRawData) {
+                    NSXMLDocument *xml = [[NSXMLDocument alloc] initWithData:[txt dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
+                    NSData *data = [xml objectByApplyingXSLTString:xsl arguments:nil error:nil];
+                    [txt setString:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                }
                 if (totalDefinitions > 0) {
                     NSPrint(@"%%");
                 }
-                NSPrint(@"Definitions of \"%@\" in %@:\n%@", (__bridge NSString *)term, dictionaryName, defs);
+                NSPrint(@"Definitions of \"%@\" in %@:\n%@", (__bridge NSString *)term, dictionaryName, txt);
 
                 CFRelease(definition);
                 CFRelease(term);
