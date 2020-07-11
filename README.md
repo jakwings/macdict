@@ -1,33 +1,29 @@
-macdict2
-========
+macdict
+=======
 
-The second version of macdict.
+A simple tool for debugging your dictionaries on MacOS?
 
 Installation
 ------------
 
-for Swift™ executable file:
-
-> `make -f Makefile2 swfit`
-
-for Objective-C executable file:
-
-> `make -f Makefile2 objc`
+```
+make
+```
 
 Usage
 -----
 
-`macdict2 [-h] [-l] [-d <dictionary name>]... [-i <dictionary indexes>]... [word]...`
+`macdict [-h] [-l] [-d <dictionary name>]... [-i <dictionary indexes>]... [word]...`
 
-### Options: `-h`
+### Option: `-h`
 
 Show help information and exit.
 
-### Options: `-l`
+### Option: `-l`
 
 Show a list of names of all available dictionaries with indexes.
 
-### Options: `-d <dictionary>`
+### Option: `-d <dictionary>`
 
 `dictionary` is the name of the dictionary.
 
@@ -35,16 +31,21 @@ If `dictionary` is `all`, then macdict2 will search all available dictionaries a
 
 If no dictionary is specified, macdict2 will search all system built-in dictionaries and show the first definition found.
 
-### Options: `-i <index>`
+### Option: `-i <index>`
 
 `index` is indexes of the dictionary delimited with commas `,`. If indexes contain `0` then all available dictionaries are selected.
 
 This option is only recommended for a temporary use.
 
-e.g.
+### Option: `-r`
+
+Show data in the XML format. This option only works in company with `-d` and `-i`.
+
+Examples
+--------
 
 ```
-$ macdict2 Quod Erat Demonstrandum
+$ macdict Quod Erat Demonstrandum
 Definitions of <Quod Erat Demonstrandum>
 quod erat demonstrandum |kwɒd ˌɛrat dɛmənˈstrandʊm | (abbrev.: QED) ▶exclamation used to convey that a fact or situation demonstrates the truth of one's theory or claim, especially to mark the conclusion of a formal proof. ORIGIN Latin, literally ‘which was to be demonstrated’.
 ```
@@ -96,51 +97,4 @@ macdict -l
 [13] Oxford Chinese Dictionary
 [14] Dizionario italiano da un affiliato di Oxford University Press
 [15] Apple 辭典
-```
-
-- - -
-
-macdict
-=======
-
-A commandline tool for Mac OS X to look up words in the builtin/user dictionaries.
-
-Supports: OS X v10.5 and later
-
-Installation
-------------
-
-for C executable file:
-
-> `make c`
-
-for Objective-C executable file:
-
-> `make m`
-
-for Python executable file:
-
-> `make py`
-
-for Shell executable file:
-
-> `make sh`
-
-Usage
------
-
-`macdict <words>`
-
-e.g.
-
-```
-$ macdict Mac OS X
-Definitions of <Mac OS X>
-mac os
-Mac OS
-{Macintosh Operating System}
-
-$ macdict 负增长
-Definitions of <负增长>
-负增长 fùzēngzhǎng 名词 negative growth 人口出现负增长。 The population appears to be in decline.
 ```
