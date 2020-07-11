@@ -1,4 +1,4 @@
-EXECUTABLE = macdict2
+EXECUTABLE = macdict
 
 objc: $(EXECUTABLE).m
 	@xcrun clang -fobjc-arc -o $(EXECUTABLE) -framework CoreServices -framework Foundation $< \
